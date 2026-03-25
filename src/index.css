@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --bg: 222 47% 8%;
+  --fg: 210 40% 98%;
+  --muted: 215 25% 65%;
+  --card: 225 40% 16%;
+  --glass: 228 45% 14% / 0.55;
+  --primary: 252 85% 60%;
+  --accent: 210 90% 55%;
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: 230 52% 6%;
+  --fg: 210 40% 98%;
+  --muted: 215 25% 65%;
+  --card: 230 44% 12%;
+  --glass: 230 55% 10% / 0.6;
+  --primary: 252 85% 60%;
+  --accent: 210 90% 55%;
+}
+
+* {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top, rgba(76, 89, 255, 0.15), transparent 55%),
+    radial-gradient(circle at 20% 80%, rgba(0, 177, 255, 0.18), transparent 50%),
+    hsl(var(--bg));
+  color: hsl(var(--fg));
+  min-height: 100vh;
+}
+
+.glass {
+  background: linear-gradient(135deg, rgba(120, 130, 255, 0.2), rgba(30, 40, 80, 0.45));
+  border: 1px solid rgba(120, 130, 255, 0.25);
+  box-shadow: 0 10px 40px rgba(10, 14, 40, 0.5);
+  backdrop-filter: blur(18px);
+}
+
+.gradient-text {
+  background: linear-gradient(120deg, hsl(var(--primary)), hsl(var(--accent)));
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, rgba(104, 106, 246, 0.95), rgba(19, 146, 241, 0.9));
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(10, 15, 40, 0.6);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(108, 99, 255, 0.9), rgba(22, 140, 255, 0.9));
+  border-radius: 10px;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(108, 99, 255, 0.9) rgba(10, 15, 40, 0.6);
+}
+
+.float-card {
+  animation: float 6s ease-in-out infinite;
+}
+
+.pulse-glow {
+  animation: pulseGlow 3.5s ease-in-out infinite;
+}
+
+input, textarea, select {
+  outline: none;
+}
+
+@media print {
+  body {
+    background: white;
+    color: #0f172a;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
