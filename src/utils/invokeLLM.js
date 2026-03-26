@@ -1,5 +1,8 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'
+
 async function callApi(path, payload) {
-  const response = await fetch(path, {
+  const fullUrl = `${API_BASE_URL}${path}`
+  const response = await fetch(fullUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload || {}),
