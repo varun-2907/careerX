@@ -134,21 +134,81 @@ const fallbackJobs = {
   warning: 'AI quota reached. Showing fallback job results.',
 }
 
+function extractFirstJsonBlock(text) {
+  const startObj = text.indexOf('{')
+  const startArr = text.indexOf('[')
+  let start = -1
+  let open = ''
+  let close = ''
+
+  if (startObj !== -1 && (startArr === -1 || startObj < startArr)) {
+    start = startObj
+    open = '{'
+    close = '}'
+  } else if (startArr !== -1) {
+    start = startArr
+    open = '['
+    close = ']'
+  }
+
+  if (start === -1) return null
+
+  let depth = 0
+  let inString = false
+  let escape = false
+
+  for (let i = start; i < text.length; i += 1) {
+    const ch = text[i]
+    if (inString) {
+      if (escape) {
+        escape = false
+      } else if (ch === '\\') {
+        escape = true
+      } else if (ch === '"') {
+        inString = false
+      }
+      continue
+    }
+
+    if (ch === '"') {
+      inString = true
+      continue
+    }
+
+    if (ch === open) depth += 1
+    if (ch === close) {
+      depth -= 1
+      if (depth === 0) {
+        return text.slice(start, i + 1)
+      }
+    }
+  }
+
+  return null
+}
+
+function tryParseJson(text) {
+  const cleaned = text
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/,\s*([}\]])/g, '$1')
+
+  return JSON.parse(cleaned)
+}
+
 function parseJsonSafe(text) {
   try {
     return JSON.parse(text)
   } catch {
-    const start = text.indexOf('{')
-    const end = text.lastIndexOf('}')
-    if (start !== -1 && end !== -1) {
-      return JSON.parse(text.slice(start, end + 1))
+    const block = extractFirstJsonBlock(text || '')
+    if (!block) {
+      throw new Error('Invalid JSON from model')
     }
-    const arrStart = text.indexOf('[')
-    const arrEnd = text.lastIndexOf(']')
-    if (arrStart !== -1 && arrEnd !== -1) {
-      return JSON.parse(text.slice(arrStart, arrEnd + 1))
+    try {
+      return JSON.parse(block)
+    } catch {
+      return tryParseJson(block)
     }
-    throw new Error('Invalid JSON from model')
   }
 }
 
@@ -278,7 +338,16 @@ app.post('/api/recommendation', async (req, res) => {
       'Generate 3 matching careers with salary ranges and growth %.'
 
     const text = await callGroq({ system, user })
-    const parsed = parseJsonSafe(text)
+    let parsed
+    try {
+      parsed = parseJsonSafe(text)
+    } catch (error) {
+      const stricterSystem =
+        system +
+        ' Output must be a single JSON object with double quotes. Do not include markdown, comments, or trailing commas.'
+      const retryText = await callGroq({ system: stricterSystem, user })
+      parsed = parseJsonSafe(retryText)
+    }
     res.json(parsed)
   } catch (error) {
     if (isQuotaError(error)) {
