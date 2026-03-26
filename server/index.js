@@ -313,9 +313,8 @@ app.post('/api/chat', async (req, res) => {
     res.json({ reply })
   } catch (error) {
     if (isQuotaError(error)) {
-      return res.json({
-        reply: 'I am temporarily rate-limited. Please try again in a minute or ask a shorter question.',
-        warning: 'AI quota reached.',
+      return res.status(429).json({
+        error: 'AI rate limit reached. Please try again in a minute.',
       })
     }
     res.status(500).json({ error: error.message || 'Chat failed' })
@@ -357,8 +356,16 @@ app.post('/api/recommendation', async (req, res) => {
     }
     res.json(parsed)
   } catch (error) {
+    const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return res.json(fallbackRecommendation)
+      return res.status(429).json({
+        error: 'AI rate limit reached. Please try again in a minute.',
+      })
+    }
+    if (msg.includes('Invalid JSON') || msg.includes('Unexpected')) {
+      return res.status(502).json({
+        error: 'AI returned invalid format. Please try again.',
+      })
     }
     res.status(500).json({ error: error.message || 'Recommendation failed' })
   }
@@ -384,7 +391,9 @@ app.post('/api/summary', async (req, res) => {
     res.json({ summary })
   } catch (error) {
     if (isQuotaError(error)) {
-      return res.json(fallbackSummary)
+      return res.status(429).json({
+        error: 'AI rate limit reached. Please try again in a minute.',
+      })
     }
     res.status(500).json({ error: error.message || 'Summary failed' })
   }
@@ -411,8 +420,16 @@ app.post('/api/home-content', async (req, res) => {
     const parsed = parseJsonSafe(text)
     res.json(parsed)
   } catch (error) {
+    const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return res.json(fallbackHome)
+      return res.status(429).json({
+        error: 'AI rate limit reached. Please try again in a minute.',
+      })
+    }
+    if (msg.includes('Invalid JSON') || msg.includes('Unexpected')) {
+      return res.status(502).json({
+        error: 'AI returned invalid format. Please try again.',
+      })
     }
     res.status(500).json({ error: error.message || 'Home content failed' })
   }
@@ -474,8 +491,16 @@ app.post('/api/skill-assessment', async (req, res) => {
     const finalQuiz = filtered.length >= 3 ? filtered.slice(0, 5) : quiz.slice(0, 5)
     res.json({ quiz: finalQuiz })
   } catch (error) {
+    const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return res.json(fallbackQuiz)
+      return res.status(429).json({
+        error: 'AI rate limit reached. Please try again in a minute.',
+      })
+    }
+    if (msg.includes('Invalid JSON') || msg.includes('Unexpected')) {
+      return res.status(502).json({
+        error: 'AI returned invalid format. Please try again.',
+      })
     }
     res.status(500).json({ error: error.message || 'Skill assessment failed' })
   }
@@ -513,8 +538,16 @@ app.post('/api/job-search', async (req, res) => {
     const finalJobs = filtered.length >= 2 ? filtered : jobs
     res.json({ jobs: finalJobs })
   } catch (error) {
+    const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return res.json(fallbackJobs)
+      return res.status(429).json({
+        error: 'AI rate limit reached. Please try again in a minute.',
+      })
+    }
+    if (msg.includes('Invalid JSON') || msg.includes('Unexpected')) {
+      return res.status(502).json({
+        error: 'AI returned invalid format. Please try again.',
+      })
     }
     res.status(500).json({ error: error.message || 'Job search failed' })
   }
