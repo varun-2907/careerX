@@ -95,7 +95,7 @@ export default function AIGuideChat() {
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                    className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                       message.role === 'assistant'
                         ? 'bg-slate-900/60 text-slate-100'
                         : 'bg-gradient-to-r from-indigo-500/70 to-cyan-500/70 text-white ml-auto'

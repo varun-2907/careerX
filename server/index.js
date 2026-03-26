@@ -303,9 +303,11 @@ app.post('/api/chat', async (req, res) => {
   try {
     const { messages } = req.body
     const system =
-      'You are CareerX, an AI career counselor. Give direct, practical answers. ' +
-      'If the user asks for a roadmap with a timeframe, respond with: 1) Skills focus, 2) Projects, 3) Weekly plan. ' +
-      'Keep it under 120 words and end with one clarifying question.'
+      'You are CareerX, an AI career counselor. Answer in a clear, structured format. ' +
+      'Use this exact template with labels and line breaks (no markdown): ' +
+      'Title: ...\\nSummary: ...\\nKey Points: 1) ... 2) ... 3) ...\\nAction Steps: 1) ... 2) ... 3) ...\\nQuestion: ... ' +
+      'If the user asks for a roadmap with a timeframe, reflect it in Action Steps. ' +
+      'Keep it under 140 words.'
 
     const reply = await callGroq({ system, messages })
     res.json({ reply })
