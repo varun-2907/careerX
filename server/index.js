@@ -244,7 +244,7 @@ if (process.env.DEBUG_KEYS === 'true') {
   console.log(`Groq key loaded: ${GROQ_API_KEY ? 'yes' : 'no'}`)
 }
 
-async function callGroq({ system, user, messages }) {
+async function callGroq({ system, user, messages, responseFormat }) {
   if (!GROQ_API_KEY) {
     throw new Error('Missing GROQ_API_KEY in .env.')
   }
@@ -270,6 +270,7 @@ async function callGroq({ system, user, messages }) {
       model: GROQ_MODEL,
       messages: finalMessages,
       temperature: 0.4,
+      ...(responseFormat ? { response_format: responseFormat } : {}),
     }),
   })
 
@@ -337,7 +338,7 @@ app.post('/api/recommendation', async (req, res) => {
     const user = `User profile:\nName: ${name}\nAge: ${age}\nSkills: ${skills}\nInterests: ${interests}\nAcademic Strength: ${strength}\n` +
       'Generate 3 matching careers with salary ranges and growth %.'
 
-    const text = await callGroq({ system, user })
+    const text = await callGroq({ system, user, responseFormat: { type: 'json_object' } })
     let parsed
     try {
       parsed = parseJsonSafe(text)
@@ -345,7 +346,11 @@ app.post('/api/recommendation', async (req, res) => {
       const stricterSystem =
         system +
         ' Output must be a single JSON object with double quotes. Do not include markdown, comments, or trailing commas.'
-      const retryText = await callGroq({ system: stricterSystem, user })
+      const retryText = await callGroq({
+        system: stricterSystem,
+        user,
+        responseFormat: { type: 'json_object' },
+      })
       parsed = parseJsonSafe(retryText)
     }
     res.json(parsed)
@@ -400,7 +405,7 @@ app.post('/api/home-content', async (req, res) => {
 
     const user = 'Generate fresh content for the CareerX home page.'
 
-    const text = await callGroq({ system, user })
+    const text = await callGroq({ system, user, responseFormat: { type: 'json_object' } })
     const parsed = parseJsonSafe(text)
     res.json(parsed)
   } catch (error) {
@@ -422,7 +427,7 @@ app.post('/api/upload-resume', upload.single('resume'), async (req, res) => {
     const system = 'Extract key information from this resume text: name, email, phone, skills, experience, education. Return as JSON.'
     const user = `Resume text: ${text}`
 
-    const extracted = await callGroq({ system, user })
+    const extracted = await callGroq({ system, user, responseFormat: { type: 'json_object' } })
     let parsed
     try {
       parsed = JSON.parse(extracted)
@@ -456,7 +461,7 @@ app.post('/api/skill-assessment', async (req, res) => {
       `Target role: ${role}. Current skills: ${currentSkills}. ` +
       'Focus on role-specific fundamentals, tools, and scenarios.'
 
-    const quizText = await callGroq({ system, user })
+    const quizText = await callGroq({ system, user, responseFormat: { type: 'json_object' } })
     const parsed = parseJsonSafe(quizText)
     const quiz = Array.isArray(parsed) ? parsed : parsed.quiz
     if (!Array.isArray(quiz)) {
@@ -493,7 +498,7 @@ app.post('/api/job-search', async (req, res) => {
       `Job query: ${query}. Location: ${location}. Skills: ${skills}. ` +
       'Make the job titles and descriptions directly relevant.'
 
-    const jobsText = await callGroq({ system, user })
+    const jobsText = await callGroq({ system, user, responseFormat: { type: 'json_object' } })
     const parsed = parseJsonSafe(jobsText)
     const jobs = Array.isArray(parsed) ? parsed : parsed.jobs
     if (!Array.isArray(jobs)) {
