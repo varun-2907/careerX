@@ -35,7 +35,7 @@ export default function JobSearch() {
         </p>
       </header>
 
-      <div className="glass rounded-3xl p-6 space-y-6">
+      <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-4">
         {error && (
           <div className="text-sm text-rose-300 bg-rose-500/20 border border-rose-400/30 px-4 py-3 rounded-xl">
             {error}
@@ -73,7 +73,7 @@ export default function JobSearch() {
       {jobs.length > 0 && (
         <div className="space-y-4">
           {jobs.map((job, i) => (
-            <div key={i} className="glass rounded-3xl p-6">
+            <div key={i} className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-xl font-semibold">{job.title}</h3>

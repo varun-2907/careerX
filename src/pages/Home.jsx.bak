@@ -1,0 +1,432 @@
+import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { API_BASE_URL } from '../utils/invokeLLM'
+
+export default function Home() {
+  const [content, setContent] = useState({
+    hero: {
+      eyebrow: '',
+      title: '',
+      titleAccent: '',
+      subtitle: '',
+      primaryCta: '',
+      secondaryCta: '',
+      kpis: [],
+    },
+    features: [],
+    stats: [],
+    highlights: [],
+    useCases: [],
+    futureScope: [],
+    trust: {
+      badges: [],
+      guarantees: [],
+      metrics: [],
+    },
+    team: [],
+  })
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const defaultContent = {
+    hero: {
+      eyebrow: '',
+      title: '',
+      titleAccent: '',
+      subtitle: '',
+      primaryCta: '',
+      secondaryCta: '',
+      kpis: [],
+    },
+    features: [],
+    stats: [],
+    highlights: [],
+    useCases: [],
+    futureScope: [],
+    trust: {
+      badges: [],
+      guarantees: [],
+      metrics: [],
+    },
+    team: [],
+  }
+
+  useEffect(() => {
+    let isMounted = true
+    const controller = new AbortController()
+
+    const fetchContent = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/home-content`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+        })
+        if (response.ok) {
+          const data = await response.json()
+          if (isMounted) {
+            const safeData = {
+              ...defaultContent,
+              ...(data || {}),
+              hero: { ...defaultContent.hero, ...(data?.hero || {}) },
+              trust: { ...defaultContent.trust, ...(data?.trust || {}) },
+            }
+            setContent(safeData)
+          }
+        } else {
+          const message = await response.text()
+          throw new Error(message || 'Failed to load AI content.')
+        }
+      } catch (error) {
+        if (isMounted) {
+          setError(error.message || 'Failed to load AI content.')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchContent()
+
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-6 space-y-8">
+        <div className="rounded-[32px] border border-slate-800/60 bg-slate-950/60 p-8 md:p-12 animate-pulse">
+          <div className="h-4 w-28 rounded-full bg-slate-800/80" />
+          <div className="mt-5 h-10 w-3/4 rounded-xl bg-slate-800/80" />
+          <div className="mt-4 h-4 w-2/3 rounded-full bg-slate-800/80" />
+          <div className="mt-8 grid grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-24 rounded-2xl bg-slate-900/80" />
+            ))}
+          </div>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="h-36 rounded-2xl bg-slate-900/70 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-6">
+        <div className="rounded-3xl border border-rose-500/40 bg-rose-500/10 p-6 space-y-3">
+          <p className="text-sm uppercase tracking-[0.3em] text-rose-300">AI Unavailable</p>
+          <h2 className="text-2xl font-semibold">We could not generate the home content.</h2>
+          <p className="text-slate-200">{error}</p>
+          <button
+            className="mt-2 inline-flex items-center justify-center px-5 py-2 rounded-xl bg-slate-900/70 border border-slate-700/60"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const hero = content.hero || defaultContent.hero
+  const heroKpis = Array.isArray(hero.kpis) ? hero.kpis.slice(0, 4) : []
+  const trust = content.trust || defaultContent.trust
+  const features = Array.isArray(content.features) ? content.features : []
+  const stats = Array.isArray(content.stats) ? content.stats : []
+  const highlights = Array.isArray(content.highlights) ? content.highlights : []
+  const useCases = Array.isArray(content.useCases) ? content.useCases : []
+  const futureScope = Array.isArray(content.futureScope) ? content.futureScope : []
+  const team = Array.isArray(content.team) ? content.team : []
+  const trustBadges = Array.isArray(trust.badges) ? trust.badges : []
+  const trustGuarantees = Array.isArray(trust.guarantees) ? trust.guarantees : []
+  const trustMetrics = Array.isArray(trust.metrics) ? trust.metrics : []
+  const suite = [
+    {
+      title: 'Career Recommendation',
+      description: 'AI-matched roles with salary and growth signals.',
+      href: '/recommendation',
+    },
+    {
+      title: 'Resume Builder',
+      description: 'Structured resume drafting with AI summaries.',
+      href: '/resume-builder',
+    },
+    {
+      title: 'AI Guide Chat',
+      description: 'Real-time career guidance and next-step planning.',
+      href: '/ai-guide',
+    },
+    {
+      title: 'Skill Assessment',
+      description: 'Role-aligned quizzes to validate readiness.',
+      href: '/skill-assessment',
+    },
+    {
+      title: 'Job Search',
+      description: 'Targeted opportunities based on your signals.',
+      href: '/job-search',
+    },
+  ]
+  const teammates = ['SRINITHYA', 'NAVADEEP VARMA', 'SIDDDIQ SK', 'VARUN DEEPAK']
+
+  return (
+    <div className="space-y-24">
+      <section className="max-w-6xl mx-auto px-6">
+        <div className="relative overflow-hidden rounded-[32px] border border-slate-800/60 bg-[radial-gradient(circle_at_top,_rgba(11,18,32,0.9)_0%,_rgba(8,12,24,0.85)_45%,_rgba(6,10,18,0.95)_100%)] p-10 md:p-14">
+          <div className="pointer-events-none absolute -top-32 right-8 h-64 w-64 rounded-full bg-emerald-400/15 blur-[140px]" />
+          <div className="pointer-events-none absolute -bottom-40 left-0 h-80 w-80 rounded-full bg-sky-500/20 blur-[160px]" />
+          <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-10 items-center relative">
+            <div className="space-y-6">
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="text-xs uppercase tracking-[0.35em] text-slate-400"
+              >
+                {hero.eyebrow}
+              </motion.p>
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-4xl md:text-6xl font-bold leading-tight"
+              >
+                {hero.title}{' '}
+                <span className="gradient-text">{hero.titleAccent}</span>
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-slate-300 text-lg"
+              >
+                {hero.subtitle}
+              </motion.p>
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="flex flex-wrap gap-4"
+              >
+                <a
+                  href="/recommendation"
+                  className="gradient-bg px-6 py-3 rounded-xl font-semibold text-white shadow-glow"
+                >
+                  {hero.primaryCta}
+                </a>
+                <a
+                  href="/resume-builder"
+                  className="px-6 py-3 rounded-xl border border-slate-700/60 text-slate-200 hover:text-white"
+                >
+                  {hero.secondaryCta}
+                </a>
+              </motion.div>
+            </div>
+            {heroKpis.length > 0 && (
+              <div className="rounded-3xl border border-slate-800/70 bg-slate-950/70 p-6 space-y-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">What You Get</p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  {heroKpis.map((kpi) => (
+                    <div key={kpi.label} className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-4">
+                      <p className="text-slate-400 text-xs uppercase tracking-[0.2em]">{kpi.label}</p>
+                      <p className="text-xl font-semibold text-white mt-2">{kpi.value}</p>
+                      <p className="text-xs text-slate-400 mt-2">{kpi.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 space-y-10">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Capabilities</p>
+          <h2 className="text-3xl font-semibold">Production-grade AI assistance for career momentum.</h2>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              className="glass rounded-2xl p-6 space-y-3"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.05 }}
+            >
+              <h3 className="text-xl font-semibold">{feature.title}</h3>
+              <p className="text-sm text-slate-300">{feature.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-10 items-center">
+        <div className="space-y-4">
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Signals</p>
+          <h2 className="text-3xl font-semibold">Industry proof with measurable lift.</h2>
+          <p className="text-slate-300">
+            Track readiness, velocity, and hiring impact with AI-driven benchmarks across roles.
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {stats.map((stat) => (
+            <div key={stat.label} className="glass rounded-2xl p-4 text-center">
+              <p className="text-2xl font-semibold">{stat.value}</p>
+              <p className="text-xs text-slate-400">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6">
+        <div className="glass rounded-3xl p-8 md:p-10 grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
+          <div className="space-y-4">
+            <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Use Cases</p>
+            <h2 className="text-3xl font-semibold">Built for industry-ready execution.</h2>
+            <p className="text-slate-300">
+              From early-stage talent to senior transitions, CareerX adapts outputs for real hiring pipelines.
+            </p>
+          </div>
+          <div className="space-y-4">
+            {useCases.map((item) => (
+              <div key={item.title} className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-4">
+                <p className="text-sm font-semibold">{item.title}</p>
+                <p className="text-sm text-slate-300 mt-1">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 space-y-10">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Modules</p>
+          <h2 className="text-3xl font-semibold">One workspace, end-to-end delivery.</h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {highlights.map((item) => (
+            <div key={item.title} className="glass rounded-3xl p-6 space-y-3">
+              <p className="text-lg font-semibold">{item.title}</p>
+              <p className="text-sm text-slate-300">{item.detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 space-y-10">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Product Map</p>
+          <h2 className="text-3xl font-semibold">A full glimpse of the CareerX suite.</h2>
+          <p className="text-slate-300">
+            Jump into any workflow to see how CareerX connects guidance, execution, and readiness.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {suite.map((item) => (
+            <a
+              key={item.title}
+              href={item.href}
+              className="group rounded-3xl border border-slate-800/70 bg-slate-900/60 p-6 transition hover:-translate-y-1 hover:border-emerald-400/60"
+            >
+              <p className="text-lg font-semibold">{item.title}</p>
+              <p className="text-sm text-slate-300 mt-2">{item.description}</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-emerald-300 mt-6 group-hover:text-emerald-200">
+                Open Module
+              </p>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 space-y-8">
+        <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 items-end">
+          <div className="space-y-3">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Roadmap</p>
+            <h2 className="text-3xl font-semibold">Future scope designed for scale.</h2>
+            <p className="text-slate-300">
+              We expand with new datasets, deeper simulations, and role-specific decision support.
+            </p>
+          </div>
+          <div className="rounded-3xl border border-slate-800/70 bg-slate-900/50 p-6 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Trust Signals</p>
+              <p className="text-lg font-semibold">{trustMetrics[0] && trustMetrics[0].value}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Coverage</p>
+              <p className="text-lg font-semibold">{trustMetrics[1] && trustMetrics[1].value}</p>
+            </div>
+          </div>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="rounded-3xl border border-slate-800/70 bg-slate-900/60 p-6 space-y-3">
+            <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Roadmap Focus</p>
+            <ul className="space-y-2 text-sm text-slate-200">
+              {futureScope.map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-emerald-400" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-3xl border border-slate-800/70 bg-slate-900/60 p-6 space-y-4">
+            <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Progress Signals</p>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {trustMetrics.slice(0, 4).map((metric) => (
+                <div key={metric.label} className="rounded-2xl border border-slate-800/70 bg-slate-950/60 p-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{metric.label}</p>
+                  <p className="text-lg font-semibold text-white mt-1">{metric.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-slate-800/70 bg-slate-900/60 p-6 space-y-3">
+            <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Delivery Pods</p>
+            <div className="space-y-3">
+              {team.map((pod) => (
+                <div key={pod.role} className="rounded-2xl border border-slate-800/70 bg-slate-950/60 p-4">
+                  <p className="text-sm font-semibold">{pod.role}</p>
+                  <p className="text-sm text-slate-300 mt-1">{pod.focus}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 space-y-8">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Team</p>
+          <h2 className="text-3xl font-semibold">The people shipping CareerX.</h2>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {teammates.map((name) => (
+            <div
+              key={name}
+              className="rounded-3xl border border-slate-800/70 bg-slate-900/60 p-6 text-center"
+            >
+              <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-400/80 to-sky-500/80 text-slate-900 font-semibold flex items-center justify-center">
+                {name
+                  .split(' ')
+                  .map((part) => part[0])
+                  .join('')}
+              </div>
+              <p className="mt-4 text-base font-semibold">{name}</p>
+              <p className="text-xs text-slate-400 mt-1">Core Team</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}

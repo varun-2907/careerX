@@ -14,9 +14,9 @@ export default function SkillAssessment() {
     setLoading(true)
     setError('')
     try {
-      const response = await invokeLLM('skill-assessment', { role, currentSkills: skills })
-      if (!response?.quiz) {
-        throw new Error('AI is unavailable right now. Please try again later.')
+      const response = await invokeLLM('skill-assessment', { role, currentSkills: skills, maxQuestions: 15 })
+      if (!response?.quiz || !Array.isArray(response.quiz) || response.quiz.length < 10) {
+        throw new Error('AI returned too few questions. Please update your role/skills and retry.')
       }
       setQuiz(response.quiz)
       setAnswers({})
@@ -47,7 +47,7 @@ export default function SkillAssessment() {
         </p>
       </header>
 
-      <div className="glass rounded-3xl p-6 space-y-6">
+      <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
           <input
             className="px-4 py-3 rounded-xl bg-slate-900/60 border border-slate-700/60"
@@ -72,7 +72,7 @@ export default function SkillAssessment() {
       </div>
 
       {quiz && (
-        <div className="glass rounded-3xl p-6 space-y-6">
+        <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-4">
           <h2 className="text-2xl font-semibold">Your Skill Assessment Quiz</h2>
           {quiz.map((q, i) => (
             <div key={i} className="space-y-3">
@@ -105,7 +105,7 @@ export default function SkillAssessment() {
         </div>
       )}
       {result && (
-        <div className="glass rounded-3xl p-6 text-center">
+        <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 text-center">
           <h3 className="text-2xl font-semibold">Your Score: {result.score}/{result.total}</h3>
           <p className="text-slate-300 mt-2">
             {result.score / result.total > 0.8 ? 'Excellent! You\'re well-prepared.' :

@@ -1,14 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html", "./src/**/*.{js,jsx}"] ,
+  content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        primary: "hsl(252 85% 60%)",
-        accent: "hsl(210 90% 55%)",
+        primary: "hsl(171 78% 42%)",
+        accent: "hsl(199 90% 55%)",
       },
       boxShadow: {
-        glow: "0 0 25px rgba(108, 99, 255, 0.45)",
+        glow: "0 0 28px rgba(22, 184, 166, 0.35)",
       },
       keyframes: {
         float: {
@@ -16,8 +16,8 @@ export default {
           "50%": { transform: "translateY(-12px)" },
         },
         pulseGlow: {
-          "0%, 100%": { boxShadow: "0 0 0 rgba(108, 99, 255, 0.0)" },
-          "50%": { boxShadow: "0 0 30px rgba(108, 99, 255, 0.6)" },
+          "0%, 100%": { boxShadow: "0 0 0 rgba(22, 184, 166, 0.0)" },
+          "50%": { boxShadow: "0 0 30px rgba(22, 184, 166, 0.55)" },
         },
       },
       animation: {

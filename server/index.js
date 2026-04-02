@@ -3,135 +3,49 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import multer from 'multer'
 import * as pdfParse from 'pdf-parse'
+import crypto from 'crypto'
 
 dotenv.config({ override: true })
 
 const app = express()
-app.use(cors())
+app.disable('x-powered-by')
+app.set('trust proxy', 1)
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((value) => value.trim())
+  : null
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || !allowedOrigins || allowedOrigins.length === 0) {
+        return callback(null, true)
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+      return callback(new Error('Not allowed by CORS'))
+    },
+  })
+)
 app.use(express.json({ limit: '1mb' }))
+app.use((req, res, next) => {
+  const requestId = crypto.randomUUID()
+  res.setHeader('X-Request-Id', requestId)
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('Referrer-Policy', 'no-referrer')
+  res.setHeader('X-Frame-Options', 'DENY')
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
+  req.requestId = requestId
+  next()
+})
 
 const upload = multer({ storage: multer.memoryStorage() })
 
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant'
 
-const fallbackHome = {
-  features: [
-    { title: 'AI Career Paths', desc: 'Personalized pathways based on skills and interests.' },
-    { title: 'Resume Builder', desc: 'Craft polished resumes with AI support.' },
-    { title: 'Live AI Guide', desc: 'Chat with a career counselor that understands your goals.' },
-    { title: 'Skill Gap Radar', desc: 'Spot gaps and plan learning sprints.' },
-    { title: 'Growth Forecasts', desc: 'Salary and growth trends instantly.' },
-    { title: 'Portfolio Blueprint', desc: 'Project ideas curated for your target role.' },
-  ],
-  stats: [
-    { label: 'Career Paths', value: '250+' },
-    { label: 'AI Sessions', value: '42K+' },
-    { label: 'Confidence Boost', value: '3.8x' },
-  ],
-  futureScope: [
-    'AI-curated internships and mentorship matching.',
-    'Personalized learning roadmaps with progress analytics.',
-    'Hiring readiness score with interview simulations.',
-  ],
-  highlights: [
-    { title: 'AI Recommendation Engine', detail: 'Career matches with salary + growth analytics.' },
-    { title: 'Resume Studio', detail: 'Tabbed editor with AI summary and live preview.' },
-    { title: 'Real-Time AI Guide', detail: 'Conversational mentor with quick prompts.' },
-  ],
-}
-
 const isQuotaError = (error) => {
   const msg = String(error?.message || '')
   return msg.includes('429') || msg.toLowerCase().includes('rate')
-}
-
-const fallbackRecommendation = {
-  recommendations: [
-    {
-      title: 'AI Product Strategist',
-      salary: '$85k - $140k',
-      growth: '32% YoY',
-      reason: 'Combines product thinking with AI-powered solutions to solve user needs.',
-    },
-    {
-      title: 'Cybersecurity Analyst',
-      salary: '$78k - $125k',
-      growth: '28% YoY',
-      reason: 'Strong demand for analytical problem-solvers in security roles.',
-    },
-    {
-      title: 'Cloud Solutions Engineer',
-      salary: '$90k - $150k',
-      growth: '30% YoY',
-      reason: 'Cloud adoption is accelerating across industries.',
-    },
-  ],
-  quote: 'Small steps compound into remarkable careers.',
-  warning: 'AI quota reached. Showing fallback recommendations.',
-}
-
-const fallbackSummary = {
-  summary:
-    'Ambitious and detail-oriented professional with a passion for innovation, teamwork, and delivering measurable impact.',
-  warning: 'AI quota reached. Showing a fallback summary.',
-}
-
-const fallbackQuiz = {
-  quiz: [
-    {
-      question: 'Which SQL clause is used to filter rows?',
-      options: ['GROUP BY', 'WHERE', 'ORDER BY', 'JOIN'],
-      correctAnswer: 1,
-    },
-    {
-      question: 'Which metric best summarizes the center of a distribution?',
-      options: ['Median', 'Variance', 'Range', 'Mode'],
-      correctAnswer: 0,
-    },
-    {
-      question: 'What does API stand for?',
-      options: ['Advanced Protocol Interface', 'Application Programming Interface', 'Applied Program Input', 'Array Program Index'],
-      correctAnswer: 1,
-    },
-    {
-      question: 'Which is a supervised learning example?',
-      options: ['K-means clustering', 'Linear regression', 'PCA', 'Apriori'],
-      correctAnswer: 1,
-    },
-    {
-      question: 'Which tool is commonly used for data visualization?',
-      options: ['Tableau', 'Redis', 'Nginx', 'Kafka'],
-      correctAnswer: 0,
-    },
-  ],
-  warning: 'AI quota reached. Showing a fallback quiz.',
-}
-
-const fallbackJobs = {
-  jobs: [
-    {
-      title: 'Data Analyst',
-      company: 'Insight Labs',
-      location: 'Remote',
-      salaryRange: '$70k - $100k',
-      description: 'Analyze datasets, build dashboards, and deliver insights to business teams.',
-    },
-    {
-      title: 'Junior Cloud Engineer',
-      company: 'SkyOps',
-      location: 'Bengaluru',
-      salaryRange: '$80k - $115k',
-      description: 'Support cloud deployments, monitoring, and infrastructure automation.',
-    },
-    {
-      title: 'Security Analyst',
-      company: 'SecureCore',
-      location: 'Hyderabad',
-      salaryRange: '$75k - $110k',
-      description: 'Monitor threats, run incident response, and maintain security baselines.',
-    },
-  ],
-  warning: 'AI quota reached. Showing fallback job results.',
 }
 
 function extractFirstJsonBlock(text) {
@@ -212,6 +126,70 @@ function parseJsonSafe(text) {
   }
 }
 
+function ensureString(value, label) {
+  const cleaned = String(value ?? '').trim()
+  if (!cleaned) {
+    const error = new Error(`Missing required field: ${label}`)
+    error.status = 400
+    throw error
+  }
+  return cleaned
+}
+
+function ensureOptionalString(value) {
+  const cleaned = String(value ?? '').trim()
+  return cleaned
+}
+
+function ensureArray(value, label) {
+  if (!Array.isArray(value) || value.length === 0) {
+    const error = new Error(`Missing required array: ${label}`)
+    error.status = 400
+    throw error
+  }
+  return value
+}
+
+function validateHomeContent(payload) {
+  const error = new Error('AI returned incomplete home content.')
+  error.status = 502
+
+  if (!payload || typeof payload !== 'object') {
+    throw error
+  }
+
+  const hero = payload.hero
+  if (!hero || typeof hero !== 'object') {
+    throw error
+  }
+
+  const requiredHeroFields = ['eyebrow', 'title', 'titleAccent', 'subtitle', 'primaryCta', 'secondaryCta']
+  const missingHero = requiredHeroFields.some((key) => !String(hero[key] || '').trim())
+  if (missingHero) {
+    throw error
+  }
+
+  const kpis = hero.kpis
+  if (!Array.isArray(kpis) || kpis.length < 2) {
+    throw error
+  }
+
+  const requiredArrays = ['features', 'stats', 'highlights', 'useCases', 'futureScope', 'team']
+  const missingArray = requiredArrays.some((key) => !Array.isArray(payload[key]) || payload[key].length === 0)
+  if (missingArray) {
+    throw error
+  }
+
+  const trust = payload.trust
+  if (!trust || typeof trust !== 'object') {
+    throw error
+  }
+
+  if (!Array.isArray(trust.metrics) || trust.metrics.length === 0) {
+    throw error
+  }
+}
+
 // Rate limiting: simple in-memory store (for production, use Redis or similar)
 const requestCounts = new Map()
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
@@ -287,6 +265,13 @@ async function callGroq({ system, user, messages, responseFormat }) {
   return text.trim()
 }
 
+function sendError(res, status, message) {
+  return res.status(status).json({
+    error: message,
+    requestId: res.getHeader('X-Request-Id'),
+  })
+}
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true })
 })
@@ -301,7 +286,7 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
-    const { messages } = req.body
+    const messages = ensureArray(req.body?.messages, 'messages')
     const system =
       'You are CareerX, an AI career counselor. Answer in a clear, structured format. ' +
       'Use this exact template with labels and line breaks (no markdown): ' +
@@ -313,11 +298,12 @@ app.post('/api/chat', async (req, res) => {
     res.json({ reply })
   } catch (error) {
     if (isQuotaError(error)) {
-      return res.status(429).json({
-        error: 'AI rate limit reached. Please try again in a minute.',
-      })
+      return sendError(res, 429, 'AI rate limit reached. Please try again in a minute.')
     }
-    res.status(500).json({ error: error.message || 'Chat failed' })
+    if (error?.status === 400) {
+      return sendError(res, 400, error.message)
+    }
+    sendError(res, 500, error.message || 'Chat failed')
   }
 })
 
@@ -331,7 +317,15 @@ app.post('/api/recommendation', async (req, res) => {
   }
 
   try {
-    const { name, age, skills, interests, strength } = req.body
+    const name = ensureString(req.body?.name, 'name')
+    const ageValue = Number(req.body?.age)
+    if (!Number.isFinite(ageValue) || ageValue < 13) {
+      throw new Error('Invalid age provided')
+    }
+    const age = String(ageValue)
+    const skills = ensureString(req.body?.skills, 'skills')
+    const interests = ensureString(req.body?.interests, 'interests')
+    const strength = ensureString(req.body?.strength, 'strength')
     const system =
       'You are CareerX. Return ONLY valid JSON. Provide exactly 3 career recommendations. ' +
       'Use "recommendations" as the array key. Each item must include: title, salary, growth, reason. Include a motivational quote as quote.'
@@ -358,16 +352,15 @@ app.post('/api/recommendation', async (req, res) => {
   } catch (error) {
     const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return res.status(429).json({
-        error: 'AI rate limit reached. Please try again in a minute.',
-      })
+      return sendError(res, 429, 'AI rate limit reached. Please try again in a minute.')
+    }
+    if (error?.status === 400) {
+      return sendError(res, 400, error.message)
     }
     if (msg.includes('Invalid JSON') || msg.includes('Unexpected')) {
-      return res.status(502).json({
-        error: 'AI returned invalid format. Please try again.',
-      })
+      return sendError(res, 502, 'AI returned invalid format. Please try again.')
     }
-    res.status(500).json({ error: error.message || 'Recommendation failed' })
+    sendError(res, 500, error.message || 'Recommendation failed')
   }
 })
 
@@ -381,7 +374,10 @@ app.post('/api/summary', async (req, res) => {
   }
 
   try {
-    const { name, role, skills, experience } = req.body
+    const name = ensureString(req.body?.name, 'name')
+    const role = ensureString(req.body?.role, 'role')
+    const skills = ensureString(req.body?.skills, 'skills')
+    const experience = ensureString(req.body?.experience, 'experience')
     const system =
       'You are a resume assistant. Write a 2-3 sentence professional summary. Keep it concise and impactful.'
 
@@ -391,11 +387,12 @@ app.post('/api/summary', async (req, res) => {
     res.json({ summary })
   } catch (error) {
     if (isQuotaError(error)) {
-      return res.status(429).json({
-        error: 'AI rate limit reached. Please try again in a minute.',
-      })
+      return sendError(res, 429, 'AI rate limit reached. Please try again in a minute.')
     }
-    res.status(500).json({ error: error.message || 'Summary failed' })
+    if (error?.status === 400) {
+      return sendError(res, 400, error.message)
+    }
+    sendError(res, 500, error.message || 'Summary failed')
   }
 })
 
@@ -410,35 +407,45 @@ app.post('/api/home-content', async (req, res) => {
 
   try {
     const system =
-      'You are CareerX AI. Return ONLY valid JSON object with keys: features, stats, futureScope, highlights. ' +
+      'You are CareerX AI. Return ONLY valid JSON object with keys: hero, features, stats, highlights, useCases, futureScope, trust, team. ' +
+      'hero = {eyebrow, title, titleAccent, subtitle, primaryCta, secondaryCta, kpis:[{label,value,detail}]}. ' +
       'features = array of 6 objects {title, desc}. stats = array of 3 objects {label, value}. ' +
-      'futureScope = array of 3 strings. highlights = array of 3 objects {title, detail}.'
+      'highlights = array of 3 objects {title, detail}. useCases = array of 3 objects {title, detail}. ' +
+      'futureScope = array of 3 strings. trust = {badges:[string], guarantees:[string], metrics:[{label,value}]}. ' +
+      'team = array of 4 objects {role, focus}. Use role-based pods, do not invent real person names.'
 
     const user = 'Generate fresh content for the CareerX home page.'
 
     const text = await callGroq({ system, user, responseFormat: { type: 'json_object' } })
     const parsed = parseJsonSafe(text)
+    validateHomeContent(parsed)
+    const requiredKeys = ['hero', 'features', 'stats', 'highlights', 'useCases', 'futureScope', 'trust', 'team']
+    const hasAllKeys = requiredKeys.every((key) => Object.prototype.hasOwnProperty.call(parsed, key))
+    if (!hasAllKeys) {
+      throw new Error('AI returned incomplete content.')
+    }
     res.json(parsed)
   } catch (error) {
     const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return res.status(429).json({
-        error: 'AI rate limit reached. Please try again in a minute.',
-      })
+      return sendError(res, 429, 'AI rate limit reached. Please try again in a minute.')
+    }
+    if (error?.status === 400) {
+      return sendError(res, 400, error.message)
     }
     if (msg.includes('Invalid JSON') || msg.includes('Unexpected')) {
-      return res.status(502).json({
-        error: 'AI returned invalid format. Please try again.',
-      })
+      return sendError(res, 502, 'AI returned invalid format. Please try again.')
     }
-    res.status(500).json({ error: error.message || 'Home content failed' })
+    sendError(res, 500, error.message || 'Home content failed')
   }
 })
 
 app.post('/api/upload-resume', upload.single('resume'), async (req, res) => {
   try {
     if (!req.file) {
-      throw new Error('No file uploaded')
+      const err = new Error('No file uploaded')
+      err.status = 400
+      throw err
     }
     const data = await pdfParse(req.file.buffer)
     const text = data.text
@@ -456,7 +463,10 @@ app.post('/api/upload-resume', upload.single('resume'), async (req, res) => {
 
     res.json({ extracted: parsed, rawText: text })
   } catch (error) {
-    res.status(500).json({ error: error.message || 'Resume upload failed' })
+    if (error?.status === 400) {
+      return sendError(res, 400, error.message)
+    }
+    sendError(res, 500, error.message || 'Resume upload failed')
   }
 })
 
@@ -470,10 +480,12 @@ app.post('/api/skill-assessment', async (req, res) => {
   }
 
   try {
-    const { role, currentSkills } = req.body
+    const role = ensureString(req.body?.role, 'role')
+    const currentSkills = ensureString(req.body?.currentSkills, 'currentSkills')
+    const maxQuestions = Math.min(Math.max(Number(req.body?.maxQuestions) || 15, 10), 20)
     const system =
-      'You are a skills assessor. Generate a 5-question quiz strictly related to the target role and skills. ' +
-      'Return ONLY valid JSON object with key quiz (array of 5 items). ' +
+      `You are a skills assessor. Generate ${maxQuestions}-question quiz strictly related to the target role and skills. ` +
+      'Return ONLY valid JSON object with key quiz (array). ' +
       'Each item: {question, options, correctAnswer}. options is array of 4 short strings. correctAnswer is index 0-3. ' +
       'Do NOT include unrelated topics.'
     const user =
@@ -482,27 +494,26 @@ app.post('/api/skill-assessment', async (req, res) => {
 
     const quizText = await callGroq({ system, user, responseFormat: { type: 'json_object' } })
     const parsed = parseJsonSafe(quizText)
-    const quiz = Array.isArray(parsed) ? parsed : parsed.quiz
+    const quiz = Array.isArray(parsed) ? parsed : parsed?.quiz
     if (!Array.isArray(quiz)) {
       throw new Error('Invalid quiz format')
     }
     const roleKey = String(role || '').toLowerCase()
     const filtered = quiz.filter((q) => String(q.question || '').toLowerCase().includes(roleKey))
-    const finalQuiz = filtered.length >= 3 ? filtered.slice(0, 5) : quiz.slice(0, 5)
+    const finalQuiz = filtered.length >= 10 ? filtered.slice(0, maxQuestions) : quiz.slice(0, maxQuestions)
     res.json({ quiz: finalQuiz })
   } catch (error) {
     const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return res.status(429).json({
-        error: 'AI rate limit reached. Please try again in a minute.',
-      })
+      return sendError(res, 429, 'AI rate limit reached. Please try again in a minute.')
+    }
+    if (error?.status === 400) {
+      return sendError(res, 400, error.message)
     }
     if (msg.includes('Invalid JSON') || msg.includes('Unexpected')) {
-      return res.status(502).json({
-        error: 'AI returned invalid format. Please try again.',
-      })
+      return sendError(res, 502, 'AI returned invalid format. Please try again.')
     }
-    res.status(500).json({ error: error.message || 'Skill assessment failed' })
+    sendError(res, 500, error.message || 'Skill assessment failed')
   }
 })
 
@@ -516,7 +527,9 @@ app.post('/api/job-search', async (req, res) => {
   }
 
   try {
-    const { query, location, skills } = req.body
+    const query = ensureString(req.body?.query, 'query')
+    const location = ensureOptionalString(req.body?.location)
+    const skills = ensureOptionalString(req.body?.skills)
     const system =
       'You are a job recommender. Return ONLY valid JSON object with key jobs (array of 3-5 items). ' +
       'Each item: {title, company, location, salaryRange, description}. ' +
@@ -540,16 +553,15 @@ app.post('/api/job-search', async (req, res) => {
   } catch (error) {
     const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return res.status(429).json({
-        error: 'AI rate limit reached. Please try again in a minute.',
-      })
+      return sendError(res, 429, 'AI rate limit reached. Please try again in a minute.')
+    }
+    if (error?.status === 400) {
+      return sendError(res, 400, error.message)
     }
     if (msg.includes('Invalid JSON') || msg.includes('Unexpected')) {
-      return res.status(502).json({
-        error: 'AI returned invalid format. Please try again.',
-      })
+      return sendError(res, 502, 'AI returned invalid format. Please try again.')
     }
-    res.status(500).json({ error: error.message || 'Job search failed' })
+    sendError(res, 500, error.message || 'Job search failed')
   }
 })
 

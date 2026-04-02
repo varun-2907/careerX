@@ -145,7 +145,7 @@ export default function ResumeBuilder() {
       </header>
 
       <div className="grid lg:grid-cols-[1fr_1.1fr] gap-8">
-        <div className="glass rounded-3xl p-6 space-y-6">
+          <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-4">
           <div className="flex flex-wrap gap-2">
             {tabs.map((tab) => (
               <button
@@ -362,7 +362,7 @@ export default function ResumeBuilder() {
           )}
         </div>
 
-        <div className="glass rounded-3xl p-6 space-y-6">
+        <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Live Preview</h2>

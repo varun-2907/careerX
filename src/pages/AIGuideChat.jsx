@@ -63,7 +63,7 @@ export default function AIGuideChat() {
       </header>
 
       <div className="grid lg:grid-cols-[1fr_0.35fr] gap-6">
-        <div className="glass rounded-3xl p-6 flex flex-col h-[560px]">
+        <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 flex flex-col h-[560px]">
           {error && (
             <div className="mb-4 text-sm text-rose-200 bg-rose-500/20 border border-rose-400/30 px-4 py-2 rounded-xl">
               {error}
@@ -77,7 +77,7 @@ export default function AIGuideChat() {
                   <p className="text-slate-300">Your personal career counselor is ready to help.</p>
                 </div>
                 <div className="space-y-4 max-w-md">
-                  <div className="glass rounded-2xl p-4 space-y-2">
+                  <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-3 space-y-2">
                     <h3 className="text-lg font-semibold">How to get started:</h3>
                     <ul className="text-sm text-slate-300 space-y-1 text-left">
                       <li>1. Tell me your current role or interests</li>
@@ -172,7 +172,7 @@ export default function AIGuideChat() {
         </div>
 
         <div className="space-y-4">
-          <div className="glass rounded-3xl p-6 space-y-3">
+          <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-3">
             <h3 className="text-lg font-semibold">Session Status</h3>
             <p className="text-sm text-slate-300">
               {typing ? 'AI counselor is typing...' : 'AI counselor is online and ready.'}

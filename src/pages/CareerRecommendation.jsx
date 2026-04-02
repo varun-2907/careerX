@@ -49,7 +49,7 @@ export default function CareerRecommendation() {
       </header>
 
       <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8">
-        <form onSubmit={handleSubmit} className="glass rounded-3xl p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
             <label className="space-y-2 text-sm text-slate-300">
               Name
@@ -122,7 +122,7 @@ export default function CareerRecommendation() {
         </form>
 
         <div className="space-y-6">
-          <div className="glass rounded-3xl p-6 space-y-3">
+          <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-3">
             <h2 className="text-xl font-semibold">AI Guidance Preview</h2>
             <p className="text-sm text-slate-300">
               Once you submit, CareerX will deliver three career paths with salary ranges, growth
@@ -135,7 +135,7 @@ export default function CareerRecommendation() {
             </div>
           )}
           {result && (
-            <div className="glass rounded-3xl p-6 space-y-6">
+            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-4">
               <div className="space-y-2">
                 <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Recommendations</p>
                 <h3 className="text-2xl font-semibold">Top AI Matches</h3>
