@@ -467,10 +467,12 @@ vercel --prod
 
 ## 🤝 Team
 
-- **SRINITHYA** – Product Lead
-- **NAVADEEP VARMA** – ML Engineer
-- **SIDDDIQ SK** – Frontend Dev
-- **VARUN DEEPAK** – Growth & Ops
+| Member | Role | GitHub |
+|--------|------|--------|
+| **SRINITHYA** | Product Lead & UI Designer | [@Srinithya-21](https://github.com/Srinithya-21) |
+| **NAVADEEP VARMA** | AI Engineer | [@navadeep-1104](https://github.com/navadeep-1104) |
+| **SIDDDIQ SK** | Frontend Developer | [@siddiqshiak521-a11y](https://github.com/siddiqshiak521-a11y) |
+| **VARUN DEEPAK** | Backend Engineer | [@varun-2907](https://github.com/varun-2907) |
 
 ---
 

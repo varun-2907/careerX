@@ -44,7 +44,7 @@ export default function ResumeBuilder() {
   }
 
   const addItem = (field, empty) => {
-    setData((prev) => ({ ...prev, [field]: [...prev[field], empty] }))
+    setData((prev) => ({ ...prev, [field]: [...prev[field], { ...empty, id: crypto.randomUUID() }] }))
   }
 
   const [error, setError] = useState('')
@@ -107,6 +107,8 @@ export default function ResumeBuilder() {
   const uploadResume = async (event) => {
     const file = event.target.files?.[0]
     if (!file) return
+    setLoading(true)
+    setError('')
     const formData = new FormData()
     formData.append('resume', file)
     try {
@@ -115,6 +117,9 @@ export default function ResumeBuilder() {
         body: formData,
       })
       const result = await response.json()
+      if (result.error) {
+        throw new Error(result.error)
+      }
       if (result.extracted) {
         setData((prev) => ({
           ...prev,
@@ -126,8 +131,9 @@ export default function ResumeBuilder() {
         }))
       }
     } catch (error) {
-      console.error('Upload failed:', error)
-      alert('Failed to upload resume.')
+      setError(error.message || 'Failed to upload and parse resume.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -248,7 +254,7 @@ export default function ResumeBuilder() {
           {activeTab === 'Experience' && (
             <div className="space-y-4">
               {data.experience.map((item, index) => (
-                <div key={index} className="space-y-2 border border-slate-800/60 rounded-2xl p-4">
+                <div key={item.id || index} className="space-y-2 border border-slate-800/60 rounded-2xl p-4">
                   <input
                     className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700/60"
                     value={item.title}
@@ -294,7 +300,7 @@ export default function ResumeBuilder() {
           {activeTab === 'Education' && (
             <div className="space-y-4">
               {data.education.map((item, index) => (
-                <div key={index} className="space-y-2 border border-slate-800/60 rounded-2xl p-4">
+                <div key={item.id || index} className="space-y-2 border border-slate-800/60 rounded-2xl p-4">
                   <input
                     className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700/60"
                     value={item.school}
@@ -337,7 +343,7 @@ export default function ResumeBuilder() {
           {activeTab === 'Projects' && (
             <div className="space-y-4">
               {data.projects.map((item, index) => (
-                <div key={index} className="space-y-2 border border-slate-800/60 rounded-2xl p-4">
+                <div key={item.id || index} className="space-y-2 border border-slate-800/60 rounded-2xl p-4">
                   <input
                     className="w-full px-4 py-2 rounded-xl bg-slate-900/60 border border-slate-700/60"
                     value={item.name}
@@ -411,7 +417,7 @@ export default function ResumeBuilder() {
               </h4>
               <div className="space-y-3 mt-2">
                 {data.experience.map((item, index) => (
-                  <div key={index}>
+                  <div key={item.id || index}>
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold">{item.title}</p>
                       <span className="text-xs text-slate-500">{item.duration}</span>

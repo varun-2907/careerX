@@ -16,7 +16,14 @@ async function callApi(path, payload) {
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(errorText || 'AI is unavailable right now. Please try again later.')
+    try {
+      const parsed = JSON.parse(errorText)
+      const message = parsed?.error || parsed?.message || 'AI is unavailable right now.'
+      const requestId = parsed?.requestId ? ` (requestId: ${parsed.requestId})` : ''
+      throw new Error(`${message}${requestId}`)
+    } catch {
+      throw new Error(errorText || 'AI is unavailable right now. Please try again later.')
+    }
   }
   return response.json()
 }

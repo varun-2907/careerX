@@ -12,9 +12,13 @@ export default function JobSearch() {
   const searchJobs = async () => {
     if (loading) return // Prevent duplicate submissions
     setLoading(true)
+    setJobs([])
     setError('')
     try {
       const response = await invokeLLM('job-search', { query, location, skills })
+      if (response?.error) {
+        throw new Error(response.error)
+      }
       if (!response?.jobs) {
         throw new Error('AI is unavailable right now. Please try again later.')
       }
@@ -78,7 +82,7 @@ export default function JobSearch() {
       {jobs.length > 0 && (
         <div className="space-y-4">
           {jobs.map((job, i) => (
-            <div key={i} className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
+            <div key={`${job.company}-${i}`} className="rounded-xl border border-slate-700 bg-slate-900/60 p-4">
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-xl font-semibold">{job.title}</h3>

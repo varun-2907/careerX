@@ -39,13 +39,9 @@ export default function Home() {
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
         })
-
-        if (!response.ok) {
-          const msg = await response.text()
-          throw new Error(msg || 'Failed to load content.')
-        }
-
         const data = await response.json()
+        if (data.error) throw new Error(data.error)
+
         if (isMounted && data) {
           setContent((prev) => ({
             ...prev,
@@ -119,14 +115,17 @@ export default function Home() {
         <p className="text-slate-400 text-sm mt-1">Small team, big impact.</p>
         <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { name: 'SRINITHYA', role: 'Product Lead and UI Designer' },
-            { name: 'NAVADEEP VARMA', role: 'AI Engineer' },
-            { name: 'SIDDDIQ SK', role: 'Frontend Dev' },
-            { name: 'VARUN DEEPAK', role: 'Backend Engineer' },
+            { name: 'SRINITHYA', role: 'Product Lead and UI Designer', github: 'Srinithya-21' },
+            { name: 'NAVADEEP VARMA', role: 'AI Engineer', github: 'navadeep-1104' },
+            { name: 'SIDDDIQ SK', role: 'Frontend Dev', github: 'siddiqshiak521-a11y' },
+            { name: 'VARUN DEEPAK', role: 'Backend Engineer', github: 'varun-2907' },
           ].map((member) => (
-            <div
+            <a
               key={member.name}
-              className="group rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 p-1"
+              href={`https://github.com/${member.github}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 p-1 transition-all duration-200 hover:border-emerald-400/50 hover:shadow-lg hover:shadow-emerald-400/20"
             >
               <div className="h-full rounded-xl bg-slate-900 p-5 transition-transform duration-200 group-hover:-translate-y-1 group-hover:bg-slate-800">
                 <div className="mx-auto mb-4 h-14 w-14 rounded-full bg-emerald-400/20 flex items-center justify-center text-base font-bold text-emerald-300">
@@ -137,8 +136,9 @@ export default function Home() {
                 </div>
                 <p className="text-white font-semibold">{member.name}</p>
                 <p className="text-xs text-emerald-300 mt-1">{member.role}</p>
+                <p className="text-xs text-slate-400 mt-2 group-hover:text-emerald-300 transition-colors">@{member.github}</p>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </section>

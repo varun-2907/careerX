@@ -111,10 +111,15 @@ function tryParseJson(text) {
 }
 
 function parseJsonSafe(text) {
+  // Clean potential Markdown wrappers if present
+  let cleanedText = (text || '').trim()
+  if (cleanedText.startsWith('```')) {
+    cleanedText = cleanedText.replace(/^```(?:json)?\s*|\s*```$/g, '')
+  }
   try {
-    return JSON.parse(text)
+    return JSON.parse(cleanedText)
   } catch {
-    const block = extractFirstJsonBlock(text || '')
+    const block = extractFirstJsonBlock(cleanedText)
     if (!block) {
       throw new Error('Invalid JSON from model')
     }
@@ -348,10 +353,7 @@ app.post('/api/recommendation', async (req, res) => {
   try {
     const name = ensureString(req.body?.name, 'name')
     const ageValue = Number(req.body?.age)
-    if (!Number.isFinite(ageValue) || ageValue < 13) {
-      throw new Error('Invalid age provided')
-    }
-    const age = String(ageValue)
+    const age = Number.isFinite(ageValue) && ageValue >= 13 ? String(ageValue) : 'Not specified'
     const skills = ensureString(req.body?.skills, 'skills')
     const interests = ensureString(req.body?.interests, 'interests')
     const strength = ensureString(req.body?.strength, 'strength')
@@ -383,6 +385,27 @@ app.post('/api/recommendation', async (req, res) => {
         responseFormat: { type: 'json_object' },
       })
       parsed = parseJsonSafe(retryText)
+    }
+
+    if (Array.isArray(parsed)) {
+      parsed = { recommendations: parsed }
+    }
+
+    const recommendations = Array.isArray(parsed?.recommendations) ? parsed.recommendations : []
+    if (recommendations.length < 3 || !parsed?.quote) {
+      const salvageSystem =
+        system +
+        ' Ensure "recommendations" is an array with exactly 3 items and include "quote".'
+      const salvageText = await callGroq({
+        system: salvageSystem,
+        user,
+        responseFormat: { type: 'json_object' },
+      })
+      parsed = parseJsonSafe(salvageText)
+    }
+
+    if (!Array.isArray(parsed?.recommendations) || parsed.recommendations.length < 3 || !parsed?.quote) {
+      throw new Error('AI returned incomplete recommendations.')
     }
 
     // Cache the result

@@ -24,9 +24,16 @@ export default function CareerRecommendation() {
     event.preventDefault()
     if (loading) return // Prevent duplicate submissions
     setLoading(true)
+    setResult(null)
     setError('')
     try {
       const response = await invokeLLM('career-recommendation', form)
+      if (response?.error) {
+        throw new Error(response.error)
+      }
+      if (!response?.recommendations || !Array.isArray(response.recommendations)) {
+        throw new Error('AI returned an invalid response. Please try again.')
+      }
       setResult(response)
     } catch (err) {
       setResult(null)
@@ -128,13 +135,15 @@ export default function CareerRecommendation() {
         </form>
 
         <div className="space-y-6">
-          <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-3">
-            <h2 className="text-xl font-semibold">AI Guidance Preview</h2>
-            <p className="text-sm text-slate-300">
-              Once you submit, CareerX will deliver three career paths with salary ranges, growth
-              rates, and a tailored justification.
-            </p>
-          </div>
+          {!result && !loading && (
+            <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-3">
+              <h2 className="text-xl font-semibold">AI Guidance Preview</h2>
+              <p className="text-sm text-slate-300">
+                Once you submit, CareerX will deliver three career paths with salary ranges, growth
+                rates, and a tailored justification.
+              </p>
+            </div>
+          )}
           {error && (
             <div className="text-sm text-rose-300 bg-rose-500/20 border border-rose-400/30 px-4 py-3 rounded-xl">
               {error}
@@ -147,8 +156,8 @@ export default function CareerRecommendation() {
                 <h3 className="text-2xl font-semibold">Top AI Matches</h3>
               </div>
               <div className="space-y-4">
-                {result.recommendations.map((career) => (
-                  <div key={career.title} className="border border-slate-700/60 rounded-2xl p-4">
+                {result.recommendations.map((career, index) => (
+                  <div key={`${career.title}-${index}`} className="border border-slate-700/60 rounded-2xl p-4">
                     <div className="flex items-center justify-between">
                       <h4 className="text-lg font-semibold">{career.title}</h4>
                       <span className="text-xs px-2 py-1 rounded-full bg-slate-800 text-slate-200">

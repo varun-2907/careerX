@@ -16,6 +16,9 @@ export default function SkillAssessment() {
     setError('')
     try {
       const response = await invokeLLM('skill-assessment', { role, currentSkills: skills, maxQuestions: 15 })
+      if (response?.error) {
+        throw new Error(response.error)
+      }
       if (!response?.quiz || !Array.isArray(response.quiz) || response.quiz.length < 10) {
         throw new Error('AI returned too few questions. Please update your role/skills and retry.')
       }
@@ -79,16 +82,16 @@ export default function SkillAssessment() {
       {quiz && (
         <div className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 space-y-4">
           <h2 className="text-2xl font-semibold">Your Skill Assessment Quiz</h2>
-          {quiz.map((q, i) => (
-            <div key={i} className="space-y-3">
+          {quiz.map((q, index) => (
+            <div key={`question-${index}`} className="space-y-3">
               <p className="font-semibold">{q.question}</p>
-              {q.options.map((opt, j) => (
-                <label key={j} className="flex items-center space-x-3">
+              {q.options.map((opt, optIndex) => (
+                <label key={`${index}-${optIndex}`} className="flex items-center space-x-3">
                   <input
                     type="radio"
-                    name={`q${i}`}
-                    value={j}
-                    onChange={() => setAnswers({ ...answers, [i]: j })}
+                    name={`q${index}`}
+                    value={optIndex}
+                    onChange={() => setAnswers({ ...answers, [index]: optIndex })}
                   />
                   <span>{opt}</span>
                 </label>
