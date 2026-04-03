@@ -115,7 +115,7 @@ Career guidance and job matching remain fragmented across multiple disconnected 
 
 | Feature | Status | Implementation Details |
 |---------|--------|------------------------|
-| Career Recommendation | COMPLETE | 3 AI-matched roles, salary estimation, growth metrics |
+| Career Recommendation | PENDING | 3 AI-matched roles, salary estimation, growth metrics |
 | Resume Builder | COMPLETE | Structured form + AI summary + PDF export (html2canvas + jsPDF) |
 | Skill Assessment | COMPLETE | 10–15 dynamic questions generated per role |
 | Job Search | COMPLETE | AI-generated job listings with relevance filtering |
