@@ -190,6 +190,35 @@ function validateHomeContent(payload) {
   }
 }
 
+// Simple response cache to reduce API hits during demo (TTL: 5 minutes)
+const responseCache = new Map()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+const getCacheKey = (type, payload) => {
+  const key = JSON.stringify({ type, ...payload })
+  return key
+}
+
+const getFromCache = (type, payload) => {
+  const key = getCacheKey(type, payload)
+  const cached = responseCache.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log(`[Cache HIT] ${type}`)
+    return cached.response
+  }
+  return null
+}
+
+const setInCache = (type, payload, response) => {
+  const key = getCacheKey(type, payload)
+  responseCache.set(key, { response, timestamp: Date.now() })
+  // Clean old entries
+  if (responseCache.size > 100) {
+    const oldest = Array.from(responseCache.entries()).sort((a, b) => a[1].timestamp - b[1].timestamp)[0]
+    responseCache.delete(oldest[0])
+  }
+}
+
 // Rate limiting: simple in-memory store (for production, use Redis or similar)
 const requestCounts = new Map()
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
@@ -326,6 +355,13 @@ app.post('/api/recommendation', async (req, res) => {
     const skills = ensureString(req.body?.skills, 'skills')
     const interests = ensureString(req.body?.interests, 'interests')
     const strength = ensureString(req.body?.strength, 'strength')
+
+    // Check cache first
+    const cacheResult = getFromCache('career-recommendation', { skills, interests, strength })
+    if (cacheResult) {
+      return res.json(cacheResult)
+    }
+
     const system =
       'You are CareerX. Return ONLY valid JSON. Provide exactly 3 career recommendations. ' +
       'Use "recommendations" as the array key. Each item must include: title, salary, growth, reason. Include a motivational quote as quote.'
@@ -348,6 +384,10 @@ app.post('/api/recommendation', async (req, res) => {
       })
       parsed = parseJsonSafe(retryText)
     }
+
+    // Cache the result
+    setInCache('career-recommendation', { skills, interests, strength }, parsed)
+
     res.json(parsed)
   } catch (error) {
     const msg = String(error?.message || '')

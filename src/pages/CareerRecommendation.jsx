@@ -22,6 +22,7 @@ export default function CareerRecommendation() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (loading) return // Prevent duplicate submissions
     setLoading(true)
     setError('')
     try {
@@ -29,7 +30,12 @@ export default function CareerRecommendation() {
       setResult(response)
     } catch (err) {
       setResult(null)
-      setError(err.message || 'AI is unavailable right now. Please try again later.')
+      const msg = err.message || 'AI is unavailable right now. Please try again later.'
+      setError(msg)
+      // Log quota errors for debugging
+      if (msg.includes('rate limit') || msg.includes('429')) {
+        console.warn('[CareerRecommendation] Rate limit hit. Wait before retry.')
+      }
     } finally {
       setLoading(false)
     }

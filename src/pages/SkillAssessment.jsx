@@ -11,6 +11,7 @@ export default function SkillAssessment() {
   const [loading, setLoading] = useState(false)
 
   const generateQuiz = async () => {
+    if (loading) return // Prevent duplicate submissions
     setLoading(true)
     setError('')
     try {
@@ -24,7 +25,11 @@ export default function SkillAssessment() {
     } catch (err) {
       setQuiz(null)
       setResult(null)
-      setError(err.message || 'AI is unavailable right now. Please try again later.')
+      const msg = err.message || 'AI is unavailable right now. Please try again later.'
+      setError(msg)
+      if (msg.includes('rate limit') || msg.includes('429')) {
+        console.warn('[SkillAssessment] Rate limit. Waiting 60s before retry possible.')
+      }
     }
     setLoading(false)
   }

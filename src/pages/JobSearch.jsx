@@ -10,6 +10,7 @@ export default function JobSearch() {
   const [loading, setLoading] = useState(false)
 
   const searchJobs = async () => {
+    if (loading) return // Prevent duplicate submissions
     setLoading(true)
     setError('')
     try {
@@ -20,7 +21,11 @@ export default function JobSearch() {
       setJobs(response.jobs)
     } catch (err) {
       setJobs([])
-      setError(err.message || 'AI is unavailable right now. Please try again later.')
+      const msg = err.message || 'AI is unavailable right now. Please try again later.'
+      setError(msg)
+      if (msg.includes('rate limit') || msg.includes('429')) {
+        console.warn('[JobSearch] Rate limit. Wait before retry.')
+      }
     }
     setLoading(false)
   }
