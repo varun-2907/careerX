@@ -14,9 +14,7 @@ export default function Footer() {
           <a className="hover:text-white" href="/resume-builder">Resume Builder</a>
           <a className="hover:text-white" href="/ai-guide">AI Guide</a>
         </div>
-        <div className="text-sm text-slate-400">
-          GitHub: <a className="hover:text-white" href={`https://github.com/${githubHandle}`}>@{githubHandle}</a>
-        </div>
+        
       </div>
       <div className="text-center text-xs text-slate-500 pb-6">© 2026 CareerX. All rights reserved.</div>
     </footer>
