@@ -48,6 +48,70 @@ const isQuotaError = (error) => {
   return msg.includes('429') || msg.toLowerCase().includes('rate')
 }
 
+function buildChatMock(messages = []) {
+  const lastUser = [...messages].reverse().find((item) => item.role === 'user')?.content || ''
+  const text = String(lastUser).toLowerCase()
+  const isCSE = ['software', 'coding', 'developer', 'web', 'full stack', 'backend', 'frontend', 'ml', 'ai', 'data']
+    .some((key) => text.includes(key))
+  const isECE = ['ece', 'embedded', 'vlsi', 'fpga', 'iot', 'signal', 'electronics', 'hardware', 'rf']
+    .some((key) => text.includes(key))
+
+  let title = 'Career Guidance Snapshot'
+  let summary =
+    'Based on your message, here is a focused 90-day plan that balances skill growth, portfolio proof, and interview readiness.'
+  let keyPoints = [
+    'Build one demonstrable project tied to your target role',
+    'Track 3-5 skills that show measurable progress each week',
+    'Practice short, structured interview answers',
+  ]
+  let actionSteps = [
+    'Week 1-2: Pick a target role and list the top 8 skills from job descriptions',
+    'Week 3-6: Build a portfolio project and document decisions weekly',
+    'Week 7-12: Prepare interviews, refine resume, and start targeted applications',
+  ]
+  let question = 'Which role are you targeting and what is your current skill level?'
+
+  if (isCSE) {
+    title = 'CSE Career Fit Plan'
+    summary =
+      'You are aligned with software roles. Focus on one product-ready project and strengthen core CS fundamentals.'
+    keyPoints = [
+      'Choose a stack: React + Node, or Python + FastAPI',
+      'Show impact with a real use case and metrics',
+      'Master DS/Algo basics and system design starters',
+    ]
+    actionSteps = [
+      'Week 1-2: Build a small full-stack app with auth + database',
+      'Week 3-6: Add APIs, tests, and deployment to cloud',
+      'Week 7-12: Practice 3 problems/day + 2 mock interviews/week',
+    ]
+    question = 'Which stack do you want to specialize in: web, data, or AI?'
+  } else if (isECE) {
+    title = 'ECE Career Fit Plan'
+    summary =
+      'You are aligned with electronics/embedded roles. Focus on one hardware-software project and tooling mastery.'
+    keyPoints = [
+      'Pick a track: embedded, VLSI, or IoT',
+      'Build a prototype and document design tradeoffs',
+      'Strengthen C, Python, and circuit fundamentals',
+    ]
+    actionSteps = [
+      'Week 1-2: Choose a microcontroller and ship a basic sensor project',
+      'Week 3-6: Add communication + power optimization',
+      'Week 7-12: Prepare a project demo + interview Q&A list',
+    ]
+    question = 'Which ECE track interests you most: embedded, VLSI, or IoT?'
+  }
+
+  return [
+    `Title: ${title}`,
+    `Summary: ${summary}`,
+    `Key Points: 1) ${keyPoints[0]} 2) ${keyPoints[1]} 3) ${keyPoints[2]}`,
+    `Action Steps: 1) ${actionSteps[0]} 2) ${actionSteps[1]} 3) ${actionSteps[2]}`,
+    `Question: ${question}`,
+  ].join('\n')
+}
+
 function extractFirstJsonBlock(text) {
   const startObj = text.indexOf('{')
   const startArr = text.indexOf('[')
@@ -250,6 +314,105 @@ const checkRateLimit = (ip) => {
   return true
 }
 
+function buildFallbackRecommendation({ name, skills, interests, strength }) {
+  const haystack = `${skills} ${interests}`.toLowerCase()
+  
+  const masterPool = [
+    // CSE DOMAIN (20)
+    { title: 'Full-Stack Developer', keywords: ['web', 'react', 'node', 'javascript', 'html', 'css', 'fullstack', 'backend', 'frontend'], salary: '$85k-$145k', growth: 'High' },
+    { title: 'Data Scientist', keywords: ['data', 'python', 'sql', 'analytics', 'statistics', 'ml', 'ai', 'machine learning'], salary: '$95k-$160k', growth: 'Very High' },
+    { title: 'Cyber Security Analyst', keywords: ['security', 'cyber', 'network', 'hacking', 'infosec', 'firewall'], salary: '$85k-$140k', growth: 'Very High' },
+    { title: 'Cloud Architect', keywords: ['cloud', 'aws', 'azure', 'gcp', 'infrastructure', 'devops', 'kubernetes'], salary: '$110k-$180k', growth: 'Very High' },
+    { title: 'Mobile App Developer', keywords: ['mobile', 'android', 'ios', 'swift', 'kotlin', 'flutter', 'react native'], salary: '$80k-$130k', growth: 'High' },
+    { title: 'AI Engineer', keywords: ['ai', 'artificial intelligence', 'neural networks', 'deep learning', 'pytorch', 'tensorflow'], salary: '$105k-$175k', growth: 'Extreme' },
+    { title: 'DevOps Engineer', keywords: ['devops', 'cicd', 'docker', 'jenkins', 'automation', 'linux'], salary: '$90k-$150k', growth: 'High' },
+    { title: 'UI/UX Designer', keywords: ['ui', 'ux', 'design', 'figma', 'product', 'creative'], salary: '$70k-$125k', growth: 'Medium' },
+    { title: 'Blockchain Developer', keywords: ['blockchain', 'web3', 'solidity', 'crypto', 'ethereum', 'smart contracts'], salary: '$95k-$170k', growth: 'High' },
+    { title: 'Game Developer', keywords: ['game', 'unity', 'unreal', 'c#', 'c++', 'graphics', '3d'], salary: '$75k-$130k', growth: 'Medium' },
+    { title: 'Frontend Engineer', keywords: ['frontend', 'react', 'angular', 'vue', 'javascript', 'typescript'], salary: '$80k-$135k', growth: 'High' },
+    { title: 'Backend Engineer', keywords: ['backend', 'java', 'go', 'python', 'ruby', 'database', 'api'], salary: '$85k-$145k', growth: 'High' },
+    { title: 'Site Reliability Engineer', keywords: ['sre', 'reliability', 'infrastructure', 'scaling', 'monitoring'], salary: '$100k-$165k', growth: 'High' },
+    { title: 'Data Engineer', keywords: ['data', 'spark', 'hadoop', 'etl', 'pipeline', 'sql', 'big data'], salary: '$95k-$155k', growth: 'Very High' },
+    { title: 'MLOps Engineer', keywords: ['mlops', 'ai', 'deployment', 'model', 'pipeline'], salary: '$110k-$175k', growth: 'Very High' },
+    { title: 'Database Administrator', keywords: ['database', 'sql', 'oracle', 'postgres', 'mongo', 'dba'], salary: '$75k-$125k', growth: 'Stable' },
+    { title: 'QA Automation Engineer', keywords: ['qa', 'testing', 'selenium', 'automation', 'python', 'cypress'], salary: '$70k-$115k', growth: 'Medium' },
+    { title: 'Computer Vision Engineer', keywords: ['vision', 'opencv', 'image', 'ai', 'pattern recognition'], salary: '$100k-$165k', growth: 'Very High' },
+    { title: 'NLP Engineer', keywords: ['nlp', 'language', 'llm', 'bert', 'text', 'ai'], salary: '$105k-$170k', growth: 'Very High' },
+    { title: 'AR/VR Developer', keywords: ['ar', 'vr', 'unity', 'xr', 'meta', 'immersion'], salary: '$85k-$145k', growth: 'High' },
+
+    // ECE DOMAIN (20)
+    { title: 'VLSI Design Engineer', keywords: ['vlsi', 'hardware', 'circuits', 'verilog', 'vhdl', 'semiconductor', 'electronics'], salary: '$90k-$155k', growth: 'High' },
+    { title: 'Embedded Systems Engineer', keywords: ['embedded', 'c', 'c++', 'microcontrollers', 'hardware', 'firmware', 'rtos'], salary: '$80k-$135k', growth: 'High' },
+    { title: 'Robotics Engineer', keywords: ['robotics', 'automation', 'sensors', 'control systems', 'mechatronics'], salary: '$85k-$145k', growth: 'High' },
+    { title: 'Network Engineer', keywords: ['network', 'cisco', 'routing', 'switching', 'telecom', 'protocol'], salary: '$75k-$120k', growth: 'Medium' },
+    { title: 'RF Engineer', keywords: ['rf', 'radio', 'antenna', 'wireless', 'communication', 'signal'], salary: '$85k-$140k', growth: 'Medium' },
+    { title: 'Analog Circuit Designer', keywords: ['analog', 'circuit', 'pcb', 'electronics', 'hardware', 'cadence'], salary: '$90k-$150k', growth: 'High' },
+    { title: 'DSP Engineer', keywords: ['dsp', 'signal', 'processing', 'matlab', 'filtering', 'audio', 'video'], salary: '$85k-$135k', growth: 'Medium' },
+    { title: 'Control Systems Engineer', keywords: ['control', 'feedback', 'automation', 'matlab', 'simulink', 'plc'], salary: '$80k-$130k', growth: 'Medium' },
+    { title: 'IoT Architect', keywords: ['iot', 'internet of things', 'sensors', 'wireless', 'connectivity', 'mqtt'], salary: '$95k-$155k', growth: 'High' },
+    { title: 'FPGA Engineer', keywords: ['fpga', 'xilinx', 'intel', 'verilog', 'vhdl', 'hardware acceleration'], salary: '$90k-$150k', growth: 'High' },
+    { title: 'Hardware Verification Engineer', keywords: ['verification', 'uvm', 'sv', 'systemverilog', 'hardware', 'testing'], salary: '$85k-$145k', growth: 'High' },
+    { title: 'Semiconductor Process Engineer', keywords: ['semiconductor', 'fabrication', 'wafer', 'lithography', 'silicon'], salary: '$80k-$135k', growth: 'Medium' },
+    { title: 'Power Electronics Engineer', keywords: ['power', 'inverter', 'converter', 'motor', 'electric vehicle', 'ev'], salary: '$85k-$140k', growth: 'High' },
+    { title: 'Automotive Electronics Engineer', keywords: ['automotive', 'car', 'can bus', 'ecu', 'adas', 'autonomous'], salary: '$90k-$145k', growth: 'High' },
+    { title: 'Telecommunications Engineer', keywords: ['telecom', '5g', 'lte', 'network', 'fiber', 'satellite'], salary: '$80k-$130k', growth: 'Medium' },
+    { title: 'Biomedical Engineer (ECE)', keywords: ['biomedical', 'medical', 'device', 'sensors', 'healthcare'], salary: '$75k-$125k', growth: 'Medium' },
+    { title: 'Firmware Engineer', keywords: ['firmware', 'c', 'drivers', 'bare metal', 'hardware'], salary: '$85k-$140k', growth: 'High' },
+    { title: 'PCB Design Engineer', keywords: ['pcb', 'altium', 'eagle', 'layout', 'hardware'], salary: '$75k-$125k', growth: 'Medium' },
+    { title: 'Microwave Engineer', keywords: ['microwave', 'radar', 'high frequency', 'electromagnetics'], salary: '$88k-$142k', growth: 'Medium' },
+    { title: 'Wireless Specialist', keywords: ['wireless', 'wifi', 'bluetooth', 'zigbee', 'connectivity'], salary: '$82k-$138k', growth: 'High' },
+  ]
+
+  const quotes = [
+    "Small steps compound into big career moves.",
+    "Your potential is only limited by your willingness to learn.",
+    "The best way to predict the future is to create it.",
+    "Hard work beats talent when talent doesn't work hard.",
+    "Career success is a marathon, not a sprint."
+  ]
+
+  // Filter and score based on keywords
+  const scoredPool = masterPool.map(item => {
+    let score = 0
+    item.keywords.forEach(kw => {
+      if (haystack.includes(kw)) score += 2
+    })
+    return { ...item, score }
+  })
+
+  // Sort by score and take top matches
+  let picks = scoredPool
+    .filter(item => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+
+  // Fill with random if not enough matches
+  while (picks.length < 3) {
+    const random = masterPool[Math.floor(Math.random() * masterPool.length)]
+    if (!picks.find(p => p.title === random.title)) {
+      picks.push(random)
+    }
+  }
+
+  // Add personalized reasons
+  const recommendations = picks.map(p => ({
+    title: p.title,
+    salary: p.salary,
+    growth: p.growth,
+    reason: `Based on your ${strength.toLowerCase()} profile and interest in ${interests.split(',')[0] || 'tech'}, this role offers significant opportunities for growth.`
+  }))
+
+  const randomQuote = quotes[Math.floor(Math.random() * quotes.length)]
+
+  return {
+    recommendations,
+    quote: name
+      ? `Keep going, ${name} — ${randomQuote.toLowerCase()}`
+      : randomQuote,
+    fallback: true,
+  }
+}
+
 const GROQ_API_KEY = process.env.GROQ_API_KEY
 
 if (process.env.DEBUG_KEYS === 'true') {
@@ -312,6 +475,13 @@ app.get('/api/health', (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   const clientIP = req.ip || req.connection.remoteAddress
+  const mockOnly = process.env.MOCK_CHAT === 'true'
+
+  if (mockOnly) {
+    const messages = ensureArray(req.body?.messages, 'messages')
+    const reply = buildChatMock(messages)
+    return res.json({ reply, model: 'mock-careerx' })
+  }
 
   if (!checkRateLimit(clientIP)) {
     return res.status(429).json({
@@ -343,10 +513,74 @@ app.post('/api/chat', async (req, res) => {
 
 app.post('/api/recommendation', async (req, res) => {
   const clientIP = req.ip || req.connection.remoteAddress
+  const mockOnly = process.env.MOCK_RECOMMENDATIONS === 'true'
+
+  if (mockOnly) {
+    const name = String(req.body?.name || '').trim()
+    const strength = String(req.body?.strength || 'Average')
+    const recommendations = [
+      { title: 'Software Engineer (CSE)', salary: '$70k-$120k', growth: 'High', reason: 'Strong fit for core coding and system design fundamentals.' },
+      { title: 'Full-Stack Developer (CSE)', salary: '$75k-$125k', growth: 'High', reason: 'Blends frontend UX with backend APIs for end-to-end product impact.' },
+      { title: 'Backend Engineer (CSE)', salary: '$80k-$130k', growth: 'High', reason: 'Scales services, databases, and distributed systems reliably.' },
+      { title: 'Frontend Engineer (CSE)', salary: '$70k-$120k', growth: 'High', reason: 'Builds responsive, accessible UIs that drive engagement.' },
+      { title: 'DevOps Engineer (CSE)', salary: '$85k-$140k', growth: 'High', reason: 'Automates deployment pipelines and improves reliability.' },
+      { title: 'Cloud Engineer (CSE)', salary: '$85k-$145k', growth: 'High', reason: 'Designs scalable cloud infrastructure for modern apps.' },
+      { title: 'Site Reliability Engineer (CSE)', salary: '$90k-$150k', growth: 'High', reason: 'Ensures uptime and performance through automation and monitoring.' },
+      { title: 'Data Engineer (CSE)', salary: '$85k-$140k', growth: 'High', reason: 'Builds pipelines and warehouses for large-scale analytics.' },
+      { title: 'Data Analyst (CSE)', salary: '$60k-$105k', growth: 'High', reason: 'Transforms data into business insights and KPIs.' },
+      { title: 'Data Scientist (CSE)', salary: '$90k-$150k', growth: 'High', reason: 'Applies statistical models and ML to solve complex problems.' },
+      { title: 'Machine Learning Engineer (CSE)', salary: '$95k-$160k', growth: 'High', reason: 'Productionizes ML models for real-world use cases.' },
+      { title: 'AI Engineer (CSE)', salary: '$95k-$160k', growth: 'High', reason: 'Builds AI-powered systems and intelligent features.' },
+      { title: 'NLP Engineer (CSE)', salary: '$95k-$155k', growth: 'High', reason: 'Specializes in language models and text intelligence.' },
+      { title: 'Computer Vision Engineer (CSE)', salary: '$95k-$155k', growth: 'High', reason: 'Builds systems for image and video understanding.' },
+      { title: 'Cybersecurity Analyst (CSE)', salary: '$75k-$130k', growth: 'High', reason: 'Protects systems, networks, and user data.' },
+      { title: 'Security Engineer (CSE)', salary: '$90k-$150k', growth: 'High', reason: 'Designs secure systems and vulnerability defenses.' },
+      { title: 'Blockchain Developer (CSE)', salary: '$85k-$145k', growth: 'Medium', reason: 'Builds smart contracts and decentralized applications.' },
+      { title: 'Game Developer (CSE)', salary: '$65k-$120k', growth: 'Medium', reason: 'Creates interactive experiences with real-time systems.' },
+      { title: 'Mobile App Developer (CSE)', salary: '$70k-$125k', growth: 'High', reason: 'Builds iOS/Android apps with strong user retention.' },
+      { title: 'QA Automation Engineer (CSE)', salary: '$65k-$115k', growth: 'Medium', reason: 'Ensures software quality with scalable test automation.' },
+      { title: 'Embedded Systems Engineer (ECE)', salary: '$75k-$130k', growth: 'High', reason: 'Builds firmware for microcontrollers and IoT devices.' },
+      { title: 'IoT Engineer (ECE)', salary: '$75k-$135k', growth: 'High', reason: 'Connects devices to cloud systems with secure protocols.' },
+      { title: 'VLSI Design Engineer (ECE)', salary: '$85k-$150k', growth: 'High', reason: 'Designs integrated circuits and high-performance chips.' },
+      { title: 'ASIC Design Engineer (ECE)', salary: '$85k-$150k', growth: 'High', reason: 'Creates custom silicon for specialized computing.' },
+      { title: 'FPGA Engineer (ECE)', salary: '$80k-$140k', growth: 'High', reason: 'Implements hardware logic for performance-critical systems.' },
+      { title: 'RF Engineer (ECE)', salary: '$80k-$140k', growth: 'Medium', reason: 'Designs wireless communication components and antennas.' },
+      { title: 'Signal Processing Engineer (ECE)', salary: '$85k-$145k', growth: 'High', reason: 'Analyzes and improves signals for audio, radar, and comms.' },
+      { title: 'Control Systems Engineer (ECE)', salary: '$80k-$140k', growth: 'Medium', reason: 'Develops automation and stability for complex systems.' },
+      { title: 'Robotics Engineer (ECE)', salary: '$85k-$150k', growth: 'High', reason: 'Builds intelligent robots with sensors and control logic.' },
+      { title: 'Embedded AI Engineer (ECE)', salary: '$90k-$155k', growth: 'High', reason: 'Deploys ML models on edge devices efficiently.' },
+      { title: 'Hardware Validation Engineer (ECE)', salary: '$75k-$125k', growth: 'Medium', reason: 'Tests hardware reliability and compliance at scale.' },
+      { title: 'Electronics Design Engineer (ECE)', salary: '$75k-$130k', growth: 'Medium', reason: 'Creates PCB designs and electronic circuits.' },
+      { title: 'Power Electronics Engineer (ECE)', salary: '$80k-$145k', growth: 'Medium', reason: 'Works on converters, inverters, and energy systems.' },
+      { title: 'Telecom Engineer (ECE)', salary: '$70k-$120k', growth: 'Medium', reason: 'Designs and optimizes telecom networks and systems.' },
+      { title: 'Network Engineer (ECE)', salary: '$70k-$120k', growth: 'High', reason: 'Builds and secures enterprise networking infrastructure.' },
+      { title: 'AR/VR Engineer (CSE)', salary: '$85k-$145k', growth: 'Medium', reason: 'Builds immersive experiences using 3D engines.' },
+      { title: 'Systems Engineer (CSE)', salary: '$80k-$140k', growth: 'High', reason: 'Integrates software, hardware, and requirements at scale.' },
+      { title: 'Product Engineer (CSE)', salary: '$80k-$135k', growth: 'High', reason: 'Bridges engineering with product strategy for impact.' },
+      { title: 'Technical Program Manager (CSE)', salary: '$90k-$150k', growth: 'High', reason: 'Coordinates complex technical delivery across teams.' },
+      { title: 'Research Engineer (CSE)', salary: '$90k-$155k', growth: 'Medium', reason: 'Explores novel methods and prototypes new systems.' },
+    ]
+
+    return res.json({
+      recommendations,
+      quote: name
+        ? `Based on your profile, ${name}, here are AI-curated paths aligned to your strengths (${strength}).`
+        : `Here are AI-curated paths aligned to your strengths (${strength}).`,
+      notice: 'AI-driven insights simulated for demo mode.',
+      mock: true,
+    })
+  }
 
   if (!checkRateLimit(clientIP)) {
-    return res.status(429).json({
-      error: 'Rate limit exceeded. Please wait before making another request.'
+    const skills = String(req.body?.skills || '')
+    const interests = String(req.body?.interests || '')
+    const strength = String(req.body?.strength || 'Average')
+    const name = String(req.body?.name || '')
+    const fallback = buildFallbackRecommendation({ name, skills, interests, strength })
+    return res.json({
+      ...fallback,
+      notice: 'Rate limit exceeded. Showing a quick fallback recommendation.',
+      rateLimited: true,
     })
   }
 
@@ -415,7 +649,23 @@ app.post('/api/recommendation', async (req, res) => {
   } catch (error) {
     const msg = String(error?.message || '')
     if (isQuotaError(error)) {
-      return sendError(res, 429, 'AI rate limit reached. Please try again in a minute.')
+      const skills = String(req.body?.skills || '')
+      const interests = String(req.body?.interests || '')
+      const strength = String(req.body?.strength || 'Average')
+      const name = String(req.body?.name || '')
+      const cached = getFromCache('career-recommendation', { skills, interests, strength })
+      if (cached) {
+        return res.json({
+          ...cached,
+          notice: 'AI rate limit reached. Showing cached recommendations.',
+          cached: true,
+        })
+      }
+      const fallback = buildFallbackRecommendation({ name, skills, interests, strength })
+      return res.json({
+        ...fallback,
+        notice: 'AI rate limit reached. Showing a quick fallback recommendation.',
+      })
     }
     if (error?.status === 400) {
       return sendError(res, 400, error.message)

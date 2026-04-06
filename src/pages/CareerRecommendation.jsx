@@ -37,7 +37,15 @@ export default function CareerRecommendation() {
       setResult(response)
     } catch (err) {
       setResult(null)
-      const msg = err.message || 'AI is unavailable right now. Please try again later.'
+      let msg = err.message || 'AI is unavailable right now. Please try again later.'
+      if (msg.trim().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(msg)
+          msg = parsed?.error || parsed?.message || msg
+        } catch {
+          // Keep original message if parsing fails
+        }
+      }
       setError(msg)
       // Log quota errors for debugging
       if (msg.includes('rate limit') || msg.includes('429')) {
@@ -154,6 +162,11 @@ export default function CareerRecommendation() {
               <div className="space-y-2">
                 <p className="text-sm uppercase tracking-[0.3em] text-slate-400">Recommendations</p>
                 <h3 className="text-2xl font-semibold">Top AI Matches</h3>
+                {result.notice && (
+                  <div className="text-xs text-amber-200 bg-amber-500/20 border border-amber-400/30 px-3 py-2 rounded-lg">
+                    {result.notice}
+                  </div>
+                )}
               </div>
               <div className="space-y-4">
                 {result.recommendations.map((career, index) => (
