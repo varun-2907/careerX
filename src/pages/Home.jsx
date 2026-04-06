@@ -175,7 +175,7 @@ export default function Home() {
           {[
             { name: 'VARUN DEEPAK', role: 'Product Lead and UI Designer' },
             { name: 'UDAY KUMAR REDDY', role: 'AI Engineer' },
-            { name: 'KRISHNA SATVIK', role: 'Frontend Dev' },
+            { name: 'KRISHNA SATHVIK', role: 'Frontend Dev' },
           ].map((member) => (
             <div
               key={member.name}

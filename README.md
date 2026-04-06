@@ -102,7 +102,7 @@ npm run preview   # Preview built frontend
 ## Team
 - VARUN DEEPAK
 - UDAY KUMAR REDDY
-- KRISHNA SATVIK
+- KRISHNA SATHVIK
 
 ## License
 MIT
